@@ -1,0 +1,464 @@
+extends layout
+
+block content
+    .tagline
+        p inno.immo <a href="https://twitter.com/mokogobo">@mokogobo</a>
+    //- .formInput
+    //-     input(id="formInput", type="text", value="", placeholder="looper", autofocus)
+    .formInput
+        span#final_span(class="final", autofocus)
+          | looper
+        span#interim_span(class="interim")
+          | 
+    script
+        // Set content editable
+        $("#final_span").attr('contentEditable', true);
+        $("#interim_span").attr('contentEditable', false);
+
+        // Add onclick event handler
+        $("#final_span").on('click', function () {
+
+          $("#final_span").html('');
+          $("#interim_span").html('');
+
+          //- return false;
+        });
+
+        // Clear the input field periodically
+        //- var intervalID = setInterval (function () {
+        //-   $("#final_span").html('');
+        //- }, 3000);
+        // clearInterval (intervalID);
+
+        //- var intervalID = setInterval (function () {
+        //-   speakText ("um... hello?");
+        //- }, Math.random () * 3000 + 1000);
+
+    script
+      function sendMessage (options) { // function text (options) {
+          var defaults = {
+              content: ""
+          };
+          var options = options || {};
+          var options = $.extend({}, defaults, options);
+
+          var http = new XMLHttpRequest();
+          //var deviceUri = "http://" + deviceAddresses[looper.getCurrentPane()];
+          var deviceUri = "http://192.168.0.122";
+          var url = deviceUri.concat ("/message");
+          var params = "content=" + options['content'];
+          url = url.concat ('?', params);
+          
+          http.open("POST", url, true);
+
+          // alert(url);
+
+          // Send the proper header information along with the request
+          http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          // http.setRequestHeader('Access-Control-Allow-Origin', '*');
+          http.setRequestHeader('X-PINGOTHER', 'pingpong');
+          
+          http.onreadystatechange = function() { // Call a function when the state changes.
+              if(http.readyState == 4 && http.status == 200) {
+                 console.log(http.responseText);
+              } else if(http.readyState == 4 && http.status == 201) {
+                  console.log("Message successfully sent.");
+
+                  // TODO: Get response from message
+
+                  // console.log(http.getResponseHeader('Location'));
+
+                  // var behaviorUri = http.getResponseHeader ('Location');
+                  // var behaviorUuid = behaviorUri.split ("/")[2];
+
+                  // console.log ("UUID: " + behaviorUuid);
+
+                  // // Update the behavior's UUID
+                  // options.behavior.uuid = behaviorUuid;
+
+                  // console.log (options.behavior);
+
+                  // TODO: Assign UUID to behavior in Looper for subsequent calls.
+              }
+          }
+          http.send(params);
+      }
+
+    script
+      if (!String.prototype.startsWith) {
+        Object.defineProperty(String.prototype, 'startsWith', {
+          enumerable: false,
+          configurable: false,
+          writable: false,
+          value: function(searchString, position) {
+            position = position || 0;
+            return this.lastIndexOf(searchString, position) === position;
+          }
+        });
+      }
+
+    script
+        var myRootRef = new Firebase ('https://looper.firebaseio.com/messages');
+        var shitCount = 16;
+
+        $(function(){
+            //$("#final_span").keypress (function (e) {
+            $("#final_span").keyup (function (e) {
+                if ((e.which && e.which == 13)||(e.keyCode && e.keyCode == 13)) {
+                    //- $('button[type=submit] .default').click();
+                    parseMessage ($("#final_span").text());
+                    //- myRootRef.push().set({shit:$("#final_span").text()});
+                    //- $("#final_span").text('');
+                    return false;
+                } else {
+                    parseMessage ($("#final_span").text());
+                    return true;
+                }
+            });
+        });
+
+        function parseMessage (message) {
+          interpretMessage (message);
+        }
+
+        function interpretMessage (message) {
+            var text = message;
+            console.log(text);
+
+            // Interaction
+            if (text === "listen") {
+                startButton(event);
+                speakText ("starting to listen");
+
+            } else if (text === "hello") {
+                speakText ("hey there, michael");
+                $("#final_span").html('');
+                $("#interim_span").html('');
+            } else if (text === "whats up") {
+                speakText ("i'm actually clueless.");
+                $("#final_span").html('');
+                $("#interim_span").html('');
+            } else if (text === "goodbye") {
+                speakText ("leave this.");
+                $("#final_span").html('');
+                $("#interim_span").html('');
+            }
+
+            else if (text === "erase loop") {
+              sendMessage({ content: text });
+              $("#final_span").html('');
+              $("#interim_span").html('');
+              myRootRef.push().set({shit:text});
+            //- } else if (text.startsWith('change color to ')) {
+            } else if (text === "change color to red" || text === "change color to green" || text === "change color to blue" || text === "change color to white") {
+              sendMessage({ content: text });
+              $("#final_span").html('');
+              $("#interim_span").html('');
+              myRootRef.push().set({shit:text});
+            } else if (text === "play note ") {
+              sendMessage({ content: text });
+              $("#final_span").html('');
+              $("#interim_span").html('');
+              myRootRef.push().set({shit:text});
+            }
+
+            // Eastereggs
+            else if (text.search (" ") > -1) {
+              if (text.split (" ")[0] === "repeat") {
+                //- speakText (message);
+                var intervalID = setInterval (function () { 
+                  speakText (text.split (" ")[1]);
+                }, parseInt (text.split (" ")[2]));
+              }
+            }
+
+            // Looper
+            else if (text === "create loop") {
+              myRootRef.push().set({ shit:$("#final_span").text() });
+              speakText ("creating a loop");
+            }
+
+            else {
+              //- speakText (message);
+            }
+
+        }
+
+        function speakText (message) {
+            var text = message;
+
+            var amplitude = 100;
+            var pitch = 200;
+            var speed = 140;
+            var wordGap = 0;
+            var variant = 'None';
+            meSpeak.speak(text, {
+                amplitude: amplitude,
+                wordgap: wordGap,
+                pitch: pitch,
+                speed: speed,
+                variant: variant
+            });
+            return false;
+        }
+
+    //- div#info
+    //-     p#info_start
+    //-         | Click on the microphone icon and begin speaking.
+    //-     p#info_speak_now
+    //-         | Speak now
+    //-     p#info_no_speech
+    //-         | No speech was detected. You may need to adjust your
+    //-         | <a href="//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">
+    //-         | microphone settings</a>.
+    //-     p#info_no_microphone(style="display:none")
+    //-         | No microphone was found. Ensure that a microphone is installed and that
+    //-         | <a href="//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">
+    //-         | microphone settings</a> are configured correctly.
+    //-     p#info_allow
+    //-         | Click the "Allow" button above to enable your microphone.
+    //-     p#info_denied
+    //-         | Permission to use microphone was denied.
+    //-     p#info_blocked
+    //-         | Permission to use microphone is blocked. To change,
+    //-         | go to chrome://settings/contentExceptions#media-stream
+    //-     p#info_upgrade
+    //-         | Web Speech API is not supported by this browser.
+    //-         | Upgrade to <a href="//www.google.com/chrome">Chrome</a>
+    //-         | version 25 or later.
+    //- .right
+    //-     button#start_button(onclick="startButton(event)")
+    //-     img#start_img(src="mic.gif", alt="Start")
+    //- .center
+    //-   div#div_language
+    //-       select#select_language(onchange="updateCountry()")
+    //-       select#select_dialect
+
+    .timeline
+        ul#timeline
+            script
+                myRootRef.endAt().limit(shitCount).on('child_added', function(snapshot) {
+                    var message = snapshot.name(), a = snapshot.val();
+                    // if (shitCount > 0) shitCount--;
+                    // if (shitCount == 0) { speakShit(a.shit); }
+                    $("<li class='slideshit'>"+a.shit+"</li>").prependTo("#timeline");
+                    $('.slideshit').hide();
+                    $('.slideshit').slideDown();
+                    $('.slideshit').removeClass('slideshit');
+                });
+
+    script
+        var langs =
+        [['Afrikaans',       ['af-ZA']],
+         ['Bahasa Indonesia',['id-ID']],
+         ['Bahasa Melayu',   ['ms-MY']],
+         ['Català',          ['ca-ES']],
+         ['Čeština',         ['cs-CZ']],
+         ['Deutsch',         ['de-DE']],
+         ['English',         ['en-AU', 'Australia'],
+                             ['en-CA', 'Canada'],
+                             ['en-IN', 'India'],
+                             ['en-NZ', 'New Zealand'],
+                             ['en-ZA', 'South Africa'],
+                             ['en-GB', 'United Kingdom'],
+                             ['en-US', 'United States']],
+         ['Español',         ['es-AR', 'Argentina'],
+                             ['es-BO', 'Bolivia'],
+                             ['es-CL', 'Chile'],
+                             ['es-CO', 'Colombia'],
+                             ['es-CR', 'Costa Rica'],
+                             ['es-EC', 'Ecuador'],
+                             ['es-SV', 'El Salvador'],
+                             ['es-ES', 'España'],
+                             ['es-US', 'Estados Unidos'],
+                             ['es-GT', 'Guatemala'],
+                             ['es-HN', 'Honduras'],
+                             ['es-MX', 'México'],
+                             ['es-NI', 'Nicaragua'],
+                             ['es-PA', 'Panamá'],
+                             ['es-PY', 'Paraguay'],
+                             ['es-PE', 'Perú'],
+                             ['es-PR', 'Puerto Rico'],
+                             ['es-DO', 'República Dominicana'],
+                             ['es-UY', 'Uruguay'],
+                             ['es-VE', 'Venezuela']],
+         ['Euskara',         ['eu-ES']],
+         ['Français',        ['fr-FR']],
+         ['Galego',          ['gl-ES']],
+         ['Hrvatski',        ['hr_HR']],
+         ['IsiZulu',         ['zu-ZA']],
+         ['Íslenska',        ['is-IS']],
+         ['Italiano',        ['it-IT', 'Italia'],
+                             ['it-CH', 'Svizzera']],
+         ['Magyar',          ['hu-HU']],
+         ['Nederlands',      ['nl-NL']],
+         ['Norsk bokmål',    ['nb-NO']],
+         ['Polski',          ['pl-PL']],
+         ['Português',       ['pt-BR', 'Brasil'],
+                             ['pt-PT', 'Portugal']],
+         ['Română',          ['ro-RO']],
+         ['Slovenčina',      ['sk-SK']],
+         ['Suomi',           ['fi-FI']],
+         ['Svenska',         ['sv-SE']],
+         ['Türkçe',          ['tr-TR']],
+         ['български',       ['bg-BG']],
+         ['Pусский',         ['ru-RU']],
+         ['Српски',          ['sr-RS']],
+         ['한국어',            ['ko-KR']],
+         ['中文',             ['cmn-Hans-CN', '普通话 (中国大陆)'],
+                             ['cmn-Hans-HK', '普通话 (香港)'],
+                             ['cmn-Hant-TW', '中文 (台灣)'],
+                             ['yue-Hant-HK', '粵語 (香港)']],
+         ['日本語',           ['ja-JP']],
+         ['Lingua latīna',   ['la']]];
+        // for (var i = 0; i < langs.length; i++) {
+        //   select_language.options[i] = new Option(langs[i][0], i);
+        // }
+        // select_language.selectedIndex = 6;
+        // updateCountry();
+        // select_dialect.selectedIndex = 6;
+        // showInfo('info_start');
+        // function updateCountry() {
+        //   for (var i = select_dialect.options.length - 1; i >= 0; i--) {
+        //     select_dialect.remove(i);
+        //   }
+        //   var list = langs[select_language.selectedIndex];
+        //   for (var i = 1; i < list.length; i++) {
+        //     select_dialect.options.add(new Option(list[i][1], list[i][0]));
+        //   }
+        //   select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
+        // }
+        var final_transcript = '';
+        var recognizing = false;
+        var ignore_onend;
+        var start_timestamp;
+        if (!('webkitSpeechRecognition' in window)) {
+          upgrade();
+        } else {
+          // start_button.style.display = 'inline-block';
+          var recognition = new webkitSpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.onstart = function() {
+            recognizing = true;
+            // showInfo('info_speak_now');
+            // start_img.src = 'mic-animate.gif';
+          };
+          recognition.onerror = function(event) {
+            if (event.error == 'no-speech') {
+              // start_img.src = 'mic.gif';
+              // showInfo('info_no_speech');
+              ignore_onend = true;
+            }
+            if (event.error == 'audio-capture') {
+              // start_img.src = 'mic.gif';
+              // showInfo('info_no_microphone');
+              ignore_onend = true;
+            }
+            if (event.error == 'not-allowed') {
+              if (event.timeStamp - start_timestamp < 100) {
+                // showInfo('info_blocked');
+              } else {
+                // showInfo('info_denied');
+              }
+              ignore_onend = true;
+            }
+          };
+          recognition.onend = function() {
+            recognizing = false;
+            if (ignore_onend) {
+              return;
+            }
+            // start_img.src = 'mic.gif';
+            if (!final_transcript) {
+              // showInfo('info_start');
+              return;
+            }
+            // showInfo('');
+            if (window.getSelection) {
+              window.getSelection().removeAllRanges();
+              var range = document.createRange();
+              range.selectNode(document.getElementById('final_span'));
+              window.getSelection().addRange(range);
+            }
+          };
+          recognition.onresult = function(event) {
+            var interim_transcript = '';
+            for (var i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                final_transcript += event.results[i][0].transcript;
+              } else {
+                interim_transcript += event.results[i][0].transcript;
+              }
+            }
+            final_transcript = linebreak(final_transcript); // final_transcript = capitalize(final_transcript);
+            final_span.innerHTML = linebreak(final_transcript);
+            parseMessage ($('#final_span').text()); // Interpret final recognized message
+
+            // document.getElementById("formInput").value = linebreak(final_transcript); // add recognized speech to string
+            interim_span.innerHTML = linebreak(interim_transcript);
+            // document.getElementById("formInput").value = linebreak(interim_transcript); // add recognized speech to string
+            if (final_transcript || interim_transcript) {
+              showButtons('inline-block');
+            }
+          };
+        }
+        function upgrade() {
+          start_button.style.visibility = 'hidden';
+          // showInfo('info_upgrade');
+        }
+        var two_line = /\n\n/g;
+        var one_line = /\n/g;
+        function linebreak(s) {
+          return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
+        }
+        var first_char = /\S/;
+        function capitalize(s) {
+          return s.replace(first_char, function(m) { return m.toUpperCase(); });
+        }
+        // function copyButton() {
+        //   if (recognizing) {
+        //     recognizing = false;
+        //     recognition.stop();
+        //   }
+        //   copy_button.style.display = 'none';
+        //   copy_info.style.display = 'inline-block';
+        //   showInfo('');
+        // }
+        function startButton(event) {
+          if (recognizing) {
+            recognition.stop();
+            return;
+          }
+          final_transcript = '';
+          // recognition.lang = select_dialect.value;
+          recognition.start();
+          ignore_onend = false;
+          final_span.innerHTML = '';
+          interim_span.innerHTML = '';
+          // start_img.src = 'mic-slash.gif';
+          // showInfo('info_allow');
+          showButtons('none');
+          start_timestamp = event.timeStamp;
+        }
+        // function showInfo(s) {
+        //   if (s) {
+        //     for (var child = info.firstChild; child; child = child.nextSibling) {
+        //       if (child.style) {
+        //         child.style.display = child.id == s ? 'inline' : 'none';
+        //       }
+        //     }
+        //     info.style.visibility = 'visible';
+        //   } else {
+        //     info.style.visibility = 'hidden';
+        //   }
+        // }
+        var current_style;
+        function showButtons(style) {
+          if (style == current_style) {
+            return;
+          }
+          current_style = style;
+          // copy_button.style.display = style;
+          // copy_info.style.display = 'none';
+        }
